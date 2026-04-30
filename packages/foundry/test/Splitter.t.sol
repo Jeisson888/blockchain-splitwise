@@ -1,10 +1,16 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.33;
 
 import "forge-std/Test.sol";
-// import "../contracts/YourContract.sol";
 
-contract YourContractTest is Test {
+import {Group} from "../contracts/Group.sol";
+import {RegistryGroups} from "../contracts/RegistryGroups.sol";
+
+
+contract Splitter is Test {
+
+//TODO: Implement Fuzztesting for different expenses.
+
 // YourContract public yourContract;
 //
 // function setUp() public {

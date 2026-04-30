@@ -1,21 +1,17 @@
-# 🏗 Scaffold-ETH 2
+# Block Splitter
 
-<h4 align="center">
-  <a href="https://docs.scaffoldeth.io">Documentation</a> |
-  <a href="https://scaffoldeth.io">Website</a>
-</h4>
+On chain application for tracking expenses and split those in equals parts for groups of people with the feature to pay using tokens or stablecoins.
 
-🧪 An open-source, up-to-date toolkit for building decentralized applications (dapps) on the Ethereum blockchain. It's designed to make it easier for developers to create and deploy smart contracts and build user interfaces that interact with those contracts.
+> Note: Using Scaffold Eth structure with Foundry.
 
-⚙️ Built using NextJS, RainbowKit, Foundry, Wagmi, Viem, and Typescript.
-
-- ✅ **Contract Hot Reload**: Your frontend auto-adapts to your smart contract as you edit it.
-- 🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/) to simplify interactions with smart contracts with typescript autocompletion.
-- 🧱 [**Components**](https://docs.scaffoldeth.io/components/): Collection of common web3 components to quickly build your frontend.
-- 🔥 **Burner Wallet & Local Faucet**: Quickly test your application with a burner wallet and local faucet.
-- 🔐 **Integration with Wallet Providers**: Connect to different wallet providers and interact with the Ethereum network.
-
-![Debug Contracts tab](https://github.com/scaffold-eth/scaffold-eth-2/assets/55535804/b237af0c-5027-4849-a5c1-2e31495cccb1)
+## Functionality
+1. Create or join to any kind of groups that are gonna have expenses.
+2. Register a Expense for all the participants of the group.
+  -Stablish the ones that are included for every expense.
+3. Split and sum balances of debt.
+4. Stablish the doubt an the person to pay for it.
+5. Voting system at the moment of getting totals to request review.
+5. Perform the payment (Swap if it is necessary deventind of the currency).
 
 ## Requirements
 
