@@ -7,6 +7,8 @@ import {Group} from "./Group.sol";
 
 contract RegistryGroups is Ownable {
     
+    event CreatedGroup( address  groupAddress, address[] initialMembers); 
+
     //TODO: Create events
     /**Factory pattern */
 
@@ -28,5 +30,6 @@ contract RegistryGroups is Ownable {
         for (uint i = 0; i < initialMembers_.length; i++) {
             memberGroups[initialMembers_[i]].push(address(newGroup));
         }
+        emit CreatedGroup(address(newGroup), initialMembers_);
     }
 }
