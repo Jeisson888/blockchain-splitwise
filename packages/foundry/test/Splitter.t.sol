@@ -6,21 +6,61 @@ import "forge-std/Test.sol";
 import {Group} from "../contracts/Group.sol";
 import {RegistryGroups} from "../contracts/RegistryGroups.sol";
 
-
 contract Splitter is Test {
 
-//TODO: Implement Fuzztesting for different expenses.
+//TODO: Implement Fuzztesting for different expenses and payments.
 
-// YourContract public yourContract;
-//
-// function setUp() public {
-//     yourContract = new YourContract(vm.addr(1));
-// }
-//
-// function testMessageOnDeployment() public view {
-//     require(
-//         keccak256(bytes(yourContract.greeting())) ==
-//             keccak256("Building Unstoppable Apps!!!")
-//     );
-// }
+    RegistryGroups rg;
+    Group testGroup;
+    function setUp() public {
+        rg = new RegistryGroups(vm.addr(1));
+        address[]  memory members_ = new address[](4);
+        members_[0] = makeAddr("thomas");
+        members_[1] = makeAddr("camilo");
+        members_[2] = makeAddr("Jeisson");
+        members_[3] = makeAddr("john doe");
+        rg.createGroup(members_);
+        testGroup = Group(rg.groupContracts(rg.groupTotal()));
+    }
+
+    // REGISTRY TESTS
+
+    function testRegistryGroupDeployedPropperly() external view{
+        assert(address(rg) != address(0));
+        assert(rg.owner() == vm.addr(1));
+    }
+
+    function testCreateGroupProperly() external {
+        address[]  memory members_ = new address[](3);
+        members_[0] = makeAddr("thomas");
+        members_[1] = makeAddr("camilo");
+        members_[2] = makeAddr("Jeisson");
+
+        rg.createGroup(members_);
+        address group = rg.groupContracts(rg.groupTotal());
+        assert(group != address(0));
+        assert(group == rg.groupContracts(rg.groupTotal()));
+        assert(members_.length == Group(group).getMembers().length);
+    }
+
+    //GROUP TESTS
+
+    function testAddExpenseWorksProperly() external {
+        address payer_ = testGroup.members(0);
+        address debtor = testGroup.members(1);
+        uint256 amount_ = 150000;
+        testGroup.addExpense(payer_, 150000);
+        uint256 splitValue = (amount_ * 1e18 ) / testGroup.getMembers().length;
+        splitValue = splitValue/1e18;
+        assert(testGroup.abs(testGroup.balances(payer_)) == amount_- splitValue);
+        assert(testGroup.abs(testGroup.balances(debtor)) == splitValue);
+
+    }
+
+    // function testMessageOnDeployment() public view {
+        // require(
+            // keccak256(bytes(yourContract.greeting())) ==
+                // keccak256("Building Unstoppable Apps!!!")
+        // );
+    // }
 }

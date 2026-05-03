@@ -12,9 +12,9 @@ contract RegistryGroups is Ownable {
     //TODO: Create events
     /**Factory pattern */
 
-    uint256 groupTotal;
-    mapping (uint256 => address) groupContracts; // GroupId => Address
-    mapping (address => address[]) memberGroups; //user => groups he belongs to  
+    uint256 public groupTotal;
+    mapping (uint256 => address) public groupContracts; // GroupId => Address
+    mapping (address => address[]) public memberGroups; //user => groups he belongs to  
 
     constructor(address owner_) Ownable(owner_){} 
 

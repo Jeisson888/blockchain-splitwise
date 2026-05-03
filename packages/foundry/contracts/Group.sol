@@ -4,16 +4,21 @@ pragma solidity 0.8.33;
 
 contract Group {
 
+    event CreatedGroup( address creator,address  groupAddress, address[] initialMembers); 
     event ExpenseAdded(address payer, uint256 amount);
 
     uint256 totalMembers;
     address registry;
     address creator;
     uint256 totalExpenses;
-    address[] members;
-    mapping(address => int256) balances;
+    address[] public members;
+    mapping(address => int256) public balances;
     mapping(address => bool) isMember;
-    mapping(address => mapping(address => uint256)) debtTopay;
+    struct debt {
+        address from;
+        address to;
+        uint256 value;
+    }
     
     
     // mapping(address => mapping(address => uint256)) membersDebt;
@@ -23,6 +28,7 @@ contract Group {
      * every single member of the group.
      */
     constructor(address registry_, address creator_, address[] memory members_) {
+        require(members_.length > 0,"Can't create a group with no members");
         creator = creator_;
         registry = registry_;
         for (uint i = 0; i < members_.length; i++) {
@@ -31,6 +37,8 @@ contract Group {
             balances[members_[i]] = 0;
         }
         totalMembers = members_.length;
+        emit CreatedGroup(msg.sender ,address(this), members);
+
     }
 
     /**
@@ -57,33 +65,11 @@ contract Group {
      * to each other.
      */
     function split()  public {
-        address to_;
-        uint256 toPay;
-        for (uint i = 0; i < members.length; i++) {
-            if(balances[members[i]]>0){
-                to_=members[i];
-                toPay = balances[members[i]];
-            }else if(balances[members[i]]<0){
-                int256 difference = toPay - abs(balances[members[i]]);
-            }
-            
-            if (difference < 0) { //
-                
-            }else if(difference > 0){
-                
-            }else {
-
-            }
-            //TODO: Not working ... needs to be  greedy or helper lists / pointers to keep registers (even pointers)
-            
-            else if (balances[members[i]]<0) {
-                
-                if (balances[to_] + balances[members[i]] > 0 ) { 
-                    debtTopay[members[i]][to_]=abs(balances[members[i]]);
-                    reminder = abs(balances[to_]) - abs(balances[members[i]]);
-                
-            }
-        }
+    
+        //TODO: implement new logic
+        //Divide in aux list + and -
+        //Then Sort
+        //Then get the transactions to pay (with the struct).
     }
 
     function abs(int256 x_)  public pure returns (uint256)  {
@@ -106,6 +92,10 @@ contract Group {
      */
     function pay() public {
 
+    }
+
+    function getMembers() public view returns (address[] memory members_) {
+        members_ = members;
     }
 
 }
