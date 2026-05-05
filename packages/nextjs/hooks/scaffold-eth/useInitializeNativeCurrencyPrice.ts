@@ -17,9 +17,15 @@ export const useInitializeNativeCurrencyPrice = () => {
 
   const fetchPrice = useCallback(async () => {
     setIsNativeCurrencyFetching(true);
-    const price = await fetchPriceFromUniswap(targetNetwork);
-    setNativeCurrencyPrice(price);
-    setIsNativeCurrencyFetching(false);
+    try {
+      const price = await fetchPriceFromUniswap(targetNetwork);
+      setNativeCurrencyPrice(price);
+    } catch (error) {
+      console.warn("useNativeCurrencyPrice: could not fetch price", error);
+      setNativeCurrencyPrice(0);
+    } finally {
+      setIsNativeCurrencyFetching(false);
+    }
   }, [setIsNativeCurrencyFetching, setNativeCurrencyPrice, targetNetwork]);
 
   // Get the price of ETH from Uniswap on mount

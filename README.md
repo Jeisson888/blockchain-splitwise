@@ -1,52 +1,119 @@
-# Block Splitter
+# SplitPay Web3
 
-On chain application for tracking expenses and split those in equals parts for groups of people with the feature to pay using tokens or stablecoins.
+SplitPay Web3 es una aplicación web que permite a los usuarios dividir gastos compartidos y saldar deudas utilizando tecnología blockchain (Ethereum). Los usuarios conectan su wallet (MetaMask), registran gastos y realizan pagos directamente entre ellos mediante smart contracts, sin intermediarios.
 
-> Note: Using Scaffold Eth structure with Foundry.
+## Descripción General
 
-## Functionality
-1. Create or join to any kind of groups that are gonna have expenses.
-2. Register a Expense for all the participants of the group.
-  -Stablish the ones that are included for every expense.
-3. Split and sum balances of debt.
-4. Stablish the doubt an the person to pay for it.
-5. Voting system at the moment of getting totals to request review.
-5. Perform the payment (Swap if it is necessary deventind of the currency).
+- **Objetivo**: Simplificar la gestión de gastos compartidos y garantizar transparencia
+- **Usuarios**: Personas que comparten gastos (amigos, compañeros de piso, viajes)
+- **Tecnología**: Ethereum blockchain con smart contracts
 
-## Requirements
+## Funcionalidades Principales
 
-Before you begin, you need to install the following tools:
+### Conexión de Wallet
+- Botón para conectar wallet (MetaMask)
+- Mostrar dirección conectada
+- Estado de conexión (conectado / desconectado)
+
+### Dashboard
+- Lista de grupos del usuario
+- Resumen de balances:
+  - Total que debe el usuario
+  - Total que le deben al usuario
+- Botón para crear grupo
+
+### Gestión de Grupos
+- Crear grupo con nombre
+- Añadir participantes (direcciones de wallet)
+- Ver detalles del grupo:
+  - Miembros
+  - Balance individual
+
+### Creación de Gastos
+- Introducir monto total
+- Seleccionar participantes involucrados
+- Descripción opcional
+- Cálculo automático del gasto dividido
+- Generación de deudas entre usuarios
+
+### Visualización de Deudas
+- Mostrar deudas de forma clara
+- Indicadores de estado (Pendiente/Pagado)
+
+### Pago de Deudas
+- Botón "Pagar"
+- Modal de confirmación con monto y gas estimado
+- Firma de transacción mediante wallet
+- Actualización del estado tras confirmación
+
+## Requisitos
+
+Antes de comenzar, necesitas instalar las siguientes herramientas:
 
 - [Node (>= v18.17)](https://nodejs.org/en/download/)
 - Yarn ([v1](https://classic.yarnpkg.com/en/docs/install/) or [v2+](https://yarnpkg.com/getting-started/install))
 - [Git](https://git-scm.com/downloads)
 - [Foundryup](https://book.getfoundry.sh/getting-started/installation)
 
-> **Note for Windows users**. Foundryup is not currently supported by Powershell or Cmd, and has issues with Git Bash. You will need to use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) as your terminal.
+> **Nota para usuarios de Windows**: Foundryup no es compatible actualmente con Powershell o Cmd, y tiene problemas con Git Bash. Necesitarás usar [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) como terminal.
 
-## Quickstart
+## Inicio Rápido
 
-To get started with Scaffold-ETH 2, follow the steps below:
+Para comenzar con SplitPay Web3, sigue estos pasos:
 
-1. Clone this repo & install dependencies
+1. Instala las dependencias
 
 ```
-git clone -b foundry https://github.com/scaffold-eth/scaffold-eth-2.git
-cd scaffold-eth-2
 yarn install && forge install --root packages/foundry
 ```
 
-2. Run a local network in the first terminal:
+2. Ejecuta una red local en la primera terminal:
 
 ```
 yarn chain
 ```
 
-3. On a second terminal, deploy the test contract:
+3. En una segunda terminal, despliega los contratos:
 
 ```
 yarn deploy
 ```
+
+4. En una tercera terminal, inicia la aplicación frontend:
+
+```
+cd packages/nextjs
+yarn dev
+```
+
+5. Abre [http://localhost:3000](http://localhost:3000) en tu navegador
+
+## Estructura del Proyecto
+
+```
+packages/
+├── foundry/          # Smart contracts con Foundry
+│   ├── contracts/    # Contratos Solidity
+│   ├── script/       # Scripts de despliegue
+│   └── test/         # Tests de contratos
+├── nextjs/           # Frontend con Next.js
+│   ├── app/          # Páginas y rutas
+│   ├── components/   # Componentes React
+│   └── hooks/        # Hooks personalizados
+└── hardhat/          # Configuración Hardhat (legacy)
+```
+
+## Contratos Inteligentes
+
+- **Group.sol**: Gestiona grupos y balances de miembros
+- **RegistryGroups.sol**: Registry para crear y gestionar grupos
+
+## Tecnologías Utilizadas
+
+- **Frontend**: Next.js, React, TypeScript, Tailwind CSS, DaisyUI
+- **Wallet**: RainbowKit, Wagmi
+- **Blockchain**: Ethereum, Foundry
+- **UI/UX**: Diseño minimalista y centrado en la usabilidad
 
 4. On a third terminal, start your NextJS app:
 
