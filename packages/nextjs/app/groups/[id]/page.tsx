@@ -1,26 +1,14 @@
-"use client";
-
-import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useAccount } from "wagmi";
+import Link from "next/link";
 import { ArrowLeftIcon, PlusIcon, UsersIcon } from "@heroicons/react/24/outline";
-import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
-import { Address } from "~~/components/scaffold-eth";
-import AddExpenseModal from "~~/components/AddExpenseModal";
-import PaymentModal from "~~/components/PaymentModal";
 
-const GroupDetails = () => {
-  const { id } = useParams();
-  const { address: connectedAddress, isConnected } = useAccount();
-  const router = useRouter();
-  const [showAddExpense, setShowAddExpense] = useState(false);
-  const [paymentData, setPaymentData] = useState<{
-    debtor: string;
-    amount: number;
-    description?: string;
-  } | null>(null);
+type GroupDetailsPageProps = {
+  params: {
+    id: string;
+  };
+};
 
-  // Mock data - replace with actual contract data
+const GroupDetails = ({ params }: GroupDetailsPageProps) => {
+  const groupId = params.id;
   const groupData = {
     name: "Weekend Trip",
     members: [
@@ -39,41 +27,14 @@ const GroupDetails = () => {
     ],
   };
 
-  const handleAddExpense = () => {
-    setShowAddExpense(true);
-  };
-
-  const handlePayment = (debtor: string, amount: number) => {
-    setPaymentData({ debtor, amount, description: "Group expense settlement" });
-  };
-
-  if (!isConnected) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-base-200">
-        <div className="card w-96 bg-base-100 shadow-xl">
-          <div className="card-body text-center">
-            <h2 className="card-title justify-center text-2xl mb-4">Connect Your Wallet</h2>
-            <p className="mb-6">You need to connect your wallet to view group details</p>
-            <div className="card-actions justify-center">
-              <RainbowKitCustomConnectButton />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-base-200 p-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <button
-            onClick={() => router.back()}
-            className="btn btn-ghost btn-circle"
-          >
+          <Link href="/" className="btn btn-ghost btn-circle">
             <ArrowLeftIcon className="h-5 w-5" />
-          </button>
+          </Link>
           <h1 className="text-3xl font-bold">{groupData.name}</h1>
         </div>
 
@@ -89,7 +50,7 @@ const GroupDetails = () => {
                 <div className="space-y-3">
                   {groupData.members.map((member, index) => (
                     <div key={index} className="flex justify-between items-center">
-                      <Address address={member.address as `0x${string}`} />
+                      <span className="font-medium">{member.address}</span>
                       <span
                         className={`font-semibold ${
                           member.balance > 0
@@ -116,10 +77,7 @@ const GroupDetails = () => {
               <div className="card-body">
                 <div className="flex justify-between items-center">
                   <h2 className="card-title">Group Expenses</h2>
-                  <button
-                    onClick={handleAddExpense}
-                    className="btn btn-primary btn-sm"
-                  >
+                  <button className="btn btn-primary btn-sm">
                     <PlusIcon className="h-4 w-4 mr-1" />
                     Add Expense
                   </button>
@@ -139,7 +97,7 @@ const GroupDetails = () => {
                             <div>
                               <h3 className="font-semibold">{expense.description}</h3>
                               <p className="text-sm text-gray-600">
-                                Paid by <Address address={expense.paidBy as `0x${string}`} />
+                                Paid by {expense.paidBy}
                               </p>
                               <p className="text-xs text-gray-500">{expense.date}</p>
                             </div>
@@ -165,17 +123,14 @@ const GroupDetails = () => {
                     .map((member, index) => (
                       <div key={index} className="flex justify-between items-center p-3 bg-error/10 rounded-lg">
                         <div>
-                          <Address address={member.address as `0x${string}`} />
+                          <span className="font-medium">{member.address}</span>
                           <p className="text-sm text-error">owes you</p>
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-error">
                             {Math.abs(member.balance).toFixed(2)} ETH
                           </p>
-                          <button
-                            className="btn btn-sm btn-error mt-1"
-                            onClick={() => handlePayment(member.address, Math.abs(member.balance))}
-                          >
+                          <button className="btn btn-sm btn-error mt-1">
                             Request Payment
                           </button>
                         </div>
@@ -190,22 +145,6 @@ const GroupDetails = () => {
           </div>
         </div>
 
-        {/* Add Expense Modal */}
-        <AddExpenseModal
-          isOpen={showAddExpense}
-          onClose={() => setShowAddExpense(false)}
-          groupId={id as string}
-          members={groupData.members}
-        />
-
-        {/* Payment Modal */}
-        <PaymentModal
-          isOpen={!!paymentData}
-          onClose={() => setPaymentData(null)}
-          debtor={paymentData?.debtor || ""}
-          amount={paymentData?.amount || 0}
-          description={paymentData?.description}
-        />
       </div>
     </div>
   );

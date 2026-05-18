@@ -1,110 +1,94 @@
-"use client";
+import Link from "next/link";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAccount } from "wagmi";
-import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
-import { Address } from "~~/components/scaffold-eth";
+const groups = [
+  {
+    name: "Vacation Split",
+    members: 4,
+    balance: "0.24 ETH",
+    link: "/groups/1",
+  },
+  {
+    name: "Dinner with Friends",
+    members: 3,
+    balance: "0.05 ETH",
+    link: "/groups/2",
+  },
+  {
+    name: "House Utilities",
+    members: 5,
+    balance: "0.12 ETH",
+    link: "/groups/3",
+  },
+];
 
 const Home = () => {
-  const { address: connectedAddress, isConnected } = useAccount();
-  const router = useRouter();
-  const [groups, setGroups] = useState<string[]>([]);
-
-  const handleCreateGroup = () => {
-    router.push("/groups/create");
-  };
-
-  if (!isConnected) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-base-200">
-        <div className="card w-96 bg-base-100 shadow-xl">
-          <div className="card-body text-center">
-            <h2 className="card-title justify-center text-2xl mb-4">Welcome to SplitPay Web3</h2>
-            <p className="mb-6">Connect your wallet to start splitting expenses with friends</p>
-            <div className="card-actions justify-center">
-              <RainbowKitCustomConnectButton />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-base-200 p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">SplitPay Web3</h1>
-          <div className="flex items-center gap-4">
-            <Address address={connectedAddress} />
-            <RainbowKitCustomConnectButton />
+    <div className="bg-base-200 py-8">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4">
+        <section className="rounded-3xl bg-base-100 p-8 shadow-lg">
+          <div className="max-w-3xl">
+            <h1 className="text-4xl font-bold mb-4">SplitPay Web3</h1>
+            <p className="text-lg text-gray-600">
+              Esta es una vista estática de la aplicación. Más adelante podrás conectar wallets y usar contratos, pero por ahora puedes ver cómo queda la interfaz.
+            </p>
           </div>
-        </div>
+        </section>
 
-        {/* Dashboard */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {/* Balance Summary */}
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">Balance Summary</h2>
-              <div className="stats stats-vertical lg:stats-horizontal shadow">
-                <div className="stat">
-                  <div className="stat-title">You Owe</div>
-                  <div className="stat-value text-error">0.00 ETH</div>
-                </div>
-                <div className="stat">
-                  <div className="stat-title">You Are Owed</div>
-                  <div className="stat-value text-success">0.00 ETH</div>
-                </div>
+        <section className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-3xl bg-base-100 p-6 shadow-lg">
+            <h2 className="text-2xl font-semibold mb-4">Resumen</h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl bg-secondary/10 p-5">
+                <p className="text-sm uppercase tracking-[0.2em] text-gray-500">Tú debes</p>
+                <p className="mt-3 text-3xl font-bold text-error">0.00 ETH</p>
+              </div>
+              <div className="rounded-2xl bg-secondary/10 p-5">
+                <p className="text-sm uppercase tracking-[0.2em] text-gray-500">Te deben</p>
+                <p className="mt-3 text-3xl font-bold text-success">0.00 ETH</p>
               </div>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">Quick Actions</h2>
-              <button className="btn btn-primary w-full mb-2" onClick={handleCreateGroup}>
-                Create New Group
-              </button>
-              <button className="btn btn-outline w-full">
-                Join Existing Group
+          <div className="rounded-3xl bg-base-100 p-6 shadow-lg">
+            <h2 className="text-2xl font-semibold mb-4">Acciones rápidas</h2>
+            <div className="flex flex-col gap-3">
+              <Link href="/groups/create" className="btn btn-primary w-full text-base font-semibold">
+                Crear nuevo grupo
+              </Link>
+              <button className="btn btn-outline w-full text-base font-semibold" disabled>
+                Unirse a grupo (próximamente)
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Groups */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title">Your Groups</h2>
-            {groups.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500 mb-4">No groups yet</p>
-                <button className="btn btn-primary" onClick={handleCreateGroup}>
-                  Create Your First Group
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {groups.map((group, index) => (
-                  <div key={index} className="card bg-base-200 hover:bg-base-300 transition-colors cursor-pointer" onClick={() => router.push(`/groups/${index + 1}`)}>
-                    <div className="card-body">
-                      <h3 className="card-title text-lg">{group}</h3>
-                      <p className="text-sm">Members: 3</p>
-                      <p className="text-sm">Your balance: 0.00 ETH</p>
-                      <div className="card-actions justify-end">
-                        <button className="btn btn-sm" onClick={(e) => { e.stopPropagation(); router.push(`/groups/${index + 1}`); }}>View Details</button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+        <section className="rounded-3xl bg-base-100 p-6 shadow-lg">
+          <div className="flex items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-2xl font-semibold">Grupos de ejemplo</h2>
+              <p className="text-sm text-gray-500">Datos estáticos para que veas el resultado.</p>
+            </div>
+            <Link href="/groups/create" className="btn btn-sm btn-secondary">
+              Crear grupo
+            </Link>
           </div>
-        </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {groups.map(group => (
+              <div key={group.name} className="rounded-3xl border border-base-200 bg-base-200 p-5 shadow-sm">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="text-xl font-semibold">{group.name}</h3>
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">{group.members} miembros</span>
+                </div>
+                <p className="text-gray-600 mb-4">Balance aproximado</p>
+                <p className="text-3xl font-bold">{group.balance}</p>
+                <Link href={group.link} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                  Ver detalles →
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );

@@ -1,5 +1,4 @@
-import { ThemeProvider } from "~~/components/ThemeProvider";
-import { ClientScaffoldEthAppWithProviders } from "~~/components/ClientScaffoldEthAppWithProviders";
+import { SimpleClientLayout } from "~~/components/SimpleClientLayout";
 import "~~/styles/globals.css";
 import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
 
@@ -8,16 +7,14 @@ export const metadata = getMetadata({
   description: "Split expenses and settle debts using Ethereum blockchain",
 });
 
-const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
+const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html suppressHydrationWarning>
       <body>
-        <ThemeProvider enableSystem>
-          <ClientScaffoldEthAppWithProviders>{children}</ClientScaffoldEthAppWithProviders>
-        </ThemeProvider>
+        <SimpleClientLayout>{children}</SimpleClientLayout>
       </body>
     </html>
   );
 };
 
-export default ScaffoldEthApp;
+export default RootLayout;
