@@ -2,6 +2,7 @@
 src = 'contracts'
 out = 'out'
 libs = ['lib']
+no_match_coverage = "script/.*"
 fs_permissions = [{ access = "read-write", path = "./"}]
 ignored_warnings_from = ["lib/forge-std"]
 

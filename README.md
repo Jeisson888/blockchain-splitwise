@@ -1,163 +1,82 @@
-# Block Splitter
+# ⛓️ Block Splitter
 
-On chain application for tracking expenses and split those in equals parts for groups of people with the feature to pay using tokens or stablecoins.
+> On-chain expense splitting for groups of people — track, split, and settle debts directly on Ethereum.
 
-> Note: Using Scaffold Eth structure with Foundry.
+## 🌟 Highlights
 
-## Functionality
-1. Create or join to any kind of groups that are gonna have expenses.
-2. Register a Expense for all the participants of the group.
-  -Stablish the ones that are included for every expense.
-3. Split and sum balances of debt.
-4. Stablish the doubt an the person to pay for it.
-5. Voting system at the moment of getting totals to request review.
-5. Perform the payment (Swap if it is necessary deventind of the currency).
+- **Trustless** — no backend, no server, expenses and debts live on-chain
+- **Group factory** — deploy isolated expense groups in one transaction
+- **Smart debt minimization** — greedy two-pointer algorithm reduces the number of payments needed
+- **Pay in one shot** — `payAll()` settles all your debts atomically in a single ETH transaction
+- Built with **Foundry** + **Scaffold-ETH 2** (Next.js frontend)
 
-## Requirements
+## ℹ️ Overview
 
-Before you begin, you need to install the following tools:
+Block Splitter is a decentralized version of Splitwise. Any user can create a group, add members, record expenses, and let the contracts compute who owes what. When it's time to settle, members send ETH directly to their creditors — no intermediary, no custody.
 
-- [Node (>= v18.17)](https://nodejs.org/en/download/)
-- Yarn ([v1](https://classic.yarnpkg.com/en/docs/install/) or [v2+](https://yarnpkg.com/getting-started/install))
-- [Git](https://git-scm.com/downloads)
-- [Foundryup](https://book.getfoundry.sh/getting-started/installation)
+The core logic lives in two contracts:
 
-> **Note for Windows users**. Foundryup is not currently supported by Powershell or Cmd, and has issues with Git Bash. You will need to use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) as your terminal.
+- **`RegistryGroups`** — factory that deploys and indexes `Group` contracts
+- **`Group`** — tracks member balances, computes debts via a greedy algorithm, and handles ETH settlement
 
-## Quickstart
+## 🚀 Quickstart
 
-To get started with Scaffold-ETH 2, follow the steps below:
+**Requirements:** Node >= 18, Yarn, Git, [Foundryup](https://book.getfoundry.sh/getting-started/installation)
 
-1. Clone this repo & install dependencies
+> **Windows users:** use WSL — Foundryup is not supported on Powershell or Git Bash.
 
-```
-git clone -b foundry https://github.com/scaffold-eth/scaffold-eth-2.git
-cd scaffold-eth-2
-yarn install && forge install --root packages/foundry
-```
+```bash
+# 1. Install dependencies
+yarn install
 
-2. Run a local network in the first terminal:
-
-```
+# 2. Start a local chain
 yarn chain
-```
 
-3. On a second terminal, deploy the test contract:
-
-```
+# 3. Deploy contracts
 yarn deploy
-```
 
-4. On a third terminal, start your NextJS app:
-
-```
+# 4. Start the frontend
 yarn start
 ```
 
-Visit your app on: `http://localhost:3000`. You can interact with your smart contract using the `Debug Contracts` page. You can tweak the app config in `packages/nextjs/scaffold.config.ts`.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-## Deploying to Live Networks
+## ⬇️ Contract usage
 
-### Deployment Commands
+```solidity
+// Create a group
+registryGroups.createGroup([alice, bob, carol]);
 
-<details open>
-<summary>Understanding deployment scripts structure</summary>
+// Record an expense (any member can call this)
+group.addExpense(alice, 120 ether);
 
-Scaffold-ETH 2 uses two types of deployment scripts in `packages/foundry/script`:
+// Compute debts
+group.split();
 
-1. `Deploy.s.sol`: Main deployment script that runs all contracts sequentially
-2. Individual scripts (e.g., `DeployYourContract.s.sol`): Deploy specific contracts
+// Settle all your debts in one tx (send exact ETH owed)
+group.payAll{ value: 50 }();
+```
 
-Each script inherits from `ScaffoldETHDeploy` which handles:
-
-- Deployer account setup and funding
-- Contract verification preparation
-- Exporting ABIs and addresses to the frontend
-</details>
-
-<details open>
-<summary>Basic deploy commands</summary>
-  
-  
-1. Deploy to a network (uses `Deploy.s.sol`):
+## 🧪 Tests
 
 ```bash
-yarn deploy --network <network-name>
+cd packages/foundry
+forge test          # run all tests
+forge test -vvv     # verbose output
+forge coverage      # coverage report
 ```
 
-2. Deploy specific contract:
+### Coverage
 
-```bash
-yarn deploy --network <network-name> --file DeployYourContract.s.sol
-```
+| Contract | Lines | Statements | Branches | Functions |
+|---|---|---|---|---|
+| `Group.sol` | 92.59% | 98.95% | 82.61% | 58.33% |
+| `RegistryGroups.sol` | 100.00% | 100.00% | 100.00% | 100.00% |
+| `Utils.sol` | 27.27% | 17.65% | 25.00% | 33.33% |
+| **Total** | **86.14%** | **87.70%** | **74.07%** | **58.82%** |
 
-This will use the `DeployYourContract.s.sol` script to deploy the contract.
+> `Utils.sol` coverage is low because `isSorted` / `isSortedDesc` helpers don't have dedicated tests yet. `Group.sol` function coverage reflects stub functions (`addMember`, `pay`, `leaveGroup`, `dissolveGroup`) pending V2 implementation.
 
-</details>
+## ✍️ Author
 
-<details>
-<summary>Environment-specific behavior</summary>
-
-**Local Development (`yarn chain`)**:
-
-- No password needed for deployment if `LOCALHOST_KEYSTORE_ACCOUNT=scaffold-eth-default` is set in `.env` file.
-- Uses Anvil's Account #9 as default keystore account
-- Update `LOCALHOST_KEYSTORE_ACCOUNT` in `.env` to use a different keystore account for deployment
-
-**Live Networks**:
-
-- Requires custom keystore (see "Creating new deployments" below)
-- Will prompt for keystore password
-
-</details>
-
-<details>
-<summary>Creating new deployments</summary>
-
-1. Create your contract in `packages/foundry/contracts`
-2. Create deployment script in `packages/foundry/script` (use existing scripts as templates)
-3. Add to main `Deploy.s.sol` if needed
-4. Deploy using commands above
-</details>
-
-### Generate/Import keystore account
-
-<details>
-<summary>Option 1: Generate new account</summary>
-
-```
-yarn generate
-```
-
-This creates a `scaffold-eth-custom` [keystore](https://book.getfoundry.sh/reference/cli/cast/wallet#cast-wallet) in `~/.foundry/keystores/scaffold-eth-custom` account.
-
-</details>
-
-<details>
-<summary>Option 2: Import existing private key</summary>
-
-```
-yarn account:import
-```
-
-</details>
-
-View your account status:
-
-```
-yarn account
-```
-
-This will ask you to select [keystore](https://book.getfoundry.sh/reference/cli/cast/wallet#cast-wallet) present `~/.foundry/keystores` and show you the balance of selected account on network configured in `packages/foundry/foundry.toml`.
-
-## Documentation
-
-Visit our [docs](https://docs.scaffoldeth.io) to learn how to start building with Scaffold-ETH 2.
-
-To know more about its features, check out our [website](https://scaffoldeth.io).
-
-## Contributing to Scaffold-ETH 2
-
-We welcome contributions to Scaffold-ETH 2!
-
-Please see [CONTRIBUTING.MD](https://github.com/scaffold-eth/scaffold-eth-2/blob/main/CONTRIBUTING.md) for more information and guidelines for contributing to Scaffold-ETH 2.
+Built by [@sh4dex](https://github.com/sh4dex) using [Scaffold-ETH 2](https://github.com/scaffold-eth/scaffold-eth-2) as the project base.

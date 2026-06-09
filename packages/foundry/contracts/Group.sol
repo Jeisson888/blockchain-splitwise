@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.33;
+import { Utils } from "./Utils.sol";
 
 contract Group {
-    event CreatedGroup(
-        address creator,
-        address groupAddress,
-        address[] initialMembers
-    );
+    Utils utils;
+
+    event CreatedGroup(address creator, address groupAddress, address[] initialMembers);
     event ExpenseAdded(address payer, uint256 amount);
     event DebtsPaid(address payer, uint256 totalOwned);
 
-    uint256 totalMembers;
+    uint256 public totalMembers;
     address public registry;
     address public creator;
     uint256 totalExpenses;
     address[] public members;
     mapping(address => int256) public balances;
     mapping(address => bool) isMember;
+
     struct Debt {
         address from;
         address to;
@@ -31,38 +31,38 @@ contract Group {
     }
 
     /**
-     * @notice initialize the mapping of balances all in zeros for
-     * every single member of the group.
+     * @param registry_ Address of the RegistryGroups factory
+     * @param creator_ Address that created this group
+     * @param members_ Initial members
+     * @param utils_ Shared Utils contract deployed once by RegistryGroups
      */
-    constructor(
-        address registry_,
-        address creator_,
-        address[] memory members_
-    ) {
+    constructor(address registry_, address creator_, address[] memory members_, address utils_) {
         require(members_.length > 0, "Can't create a group with no members");
         creator = creator_;
         registry = registry_;
-        for (uint i = 0; i < members_.length; i++) {
+        for (uint256 i = 0; i < members_.length; i++) {
             members.push(members_[i]);
             isMember[members_[i]] = true;
             balances[members_[i]] = 0;
         }
         totalMembers = members_.length;
+        utils = Utils(utils_);
         emit CreatedGroup(msg.sender, address(this), members);
     }
 
     /**
-     *
-     * @param payer_ Address that have pay for the expense
-     * @param amount_ amount paid
+     * @notice Any member can record an expense on behalf of the payer.
+     * Remainder from integer division stays with the payer (standard rounding).
+     * @param payer_ Member address that paid for the expense
+     * @param amount_ Total amount paid
      */
-    function addExpense(address payer_, uint256 amount_) public {
+    function addExpense(address payer_, uint256 amount_) public onlyMember {
         require(isMember[payer_], "Payer is not in the group");
-        require(amount_ > 0, "Amount can't be 0 or less");
+        require(amount_ != 0, "Amount can't be 0");
 
-        uint256 splitValue = (amount_ * 1e18) / totalMembers;
-        for (uint i = 0; i < members.length; i++) {
-            balances[members[i]] -= int256(splitValue / 1e18);
+        uint256 splitValue = amount_ / totalMembers;
+        for (uint256 i = 0; i < members.length; i++) {
+            balances[members[i]] -= int256(splitValue);
         }
         balances[payer_] += int256(amount_);
         totalExpenses += amount_;
@@ -70,31 +70,27 @@ contract Group {
     }
 
     /**
-     * @notice split every single time that balances are recalculated
-     * This function is to get the value that every member needs to pay
-     * to each other. (make liquidation)
+     * @notice Recomputes individual debts from current balances.
+     * Clears the previous debts array on every call.
+     * @dev Sorting is handled off-chain. For the two-pointer algorithm in getDebts()
+     * to produce an optimal result, members must be ordered by balance descending
+     * before expenses are added.
      */
-    function split() public {
-        for (uint i = 0; i < debts.length; i++) {
-            require(
-                debts[i].value == 0,
-                "Outstanding debts must be settled first"
-            );
-        }
-        uint256 n_deptors; //negative balance
-        uint256 n_creditors; //positive balance
+    function split() public onlyMember {
+        delete debts;
+        uint256 n_deptors;
+        uint256 n_creditors;
 
         uint256 n = members.length;
-        for (uint i = 0; i < n; i++) {
+        for (uint256 i = 0; i < n; i++) {
             if (balances[members[i]] >= 0) n_creditors += 1;
             else n_deptors += 1;
         }
-        //Complete the two aux lists
         address[] memory deptors = new address[](n_deptors);
         address[] memory creditors = new address[](n_creditors);
         uint256 i_deptors;
         uint256 i_creditors;
-        for (uint i = 0; i < n; i++) {
+        for (uint256 i = 0; i < n; i++) {
             if (balances[members[i]] >= 0) {
                 creditors[i_creditors] = members[i];
                 i_creditors += 1;
@@ -104,59 +100,34 @@ contract Group {
             }
         }
         getDebts(deptors, creditors);
-        //TODO: Review On-Chain Sorting
     }
 
     /**
-     * Returns true if the array is sorted or reverts with 'Array is not sorted'
-     * @param array_ Array to sort
+     * @notice Greedy two-pointer algorithm to minimize the number of transactions.
+     * @dev Both arrays must be sorted descending by absolute balance for optimal results.
+     * @param deptors_ Addresses with negative balance
+     * @param creditors_ Addresses with positive balance
      */
-    function isSorted(
-        address[] memory array_
-    ) internal view returns (bool sorted) {
-        for (uint i = 0; i < array_.length - 1; i++) {
-            require(
-                balances[array_[i]] <= balances[array_[i + 1]],
-                "Array is not sorted"
-            );
-        }
-        return true;
-    }
-
-    /**
-     * @notice Generate the individuals dev of each member of the group and each is
-     * register directly into ´debts´ array
-     * @dev Requiere deptors and creditors arrays already sorted in decremental order
-     * example [addr(1), addr(2), addr(3)] -> addr(1) on index Zero should have the
-     * Biggest value and addr(3) on index 2 should have the address with the smallest
-     * balance.
-     * @param creditors_ Address with positive Balance sorted decrementaly
-     * @param deptors_ Addresses with negative Balance sorted decrementaly
-     */
-    function getDebts(
-        address[] memory deptors_,
-        address[] memory creditors_
-    ) internal {
-        uint256 j; //Deptor pointer
+    function getDebts(address[] memory deptors_, address[] memory creditors_) internal {
+        uint256 j;
         uint256 leftCredit;
-        uint256 leftDebt = abs(balances[deptors_[j]]);
-        for (uint i = 0; i < creditors_.length; i++) {
-            leftCredit = abs(balances[creditors_[i]]);
+        uint256 leftDebt = utils.abs(balances[deptors_[j]]);
+        for (uint256 i = 0; i < creditors_.length; i++) {
+            leftCredit = utils.abs(balances[creditors_[i]]);
 
-            while (leftDebt > 0 && j < deptors_.length) {
-                //Debt is bigger than the credit
+            while (leftDebt > 0 && leftCredit > 0 && j < deptors_.length) {
                 if (leftCredit >= leftDebt) {
                     addDebt(deptors_[j], creditors_[i], leftDebt);
-                    leftCredit = leftCredit - leftDebt; //(pays all the Debt)
-                    leftDebt = 0; //next debtor
+                    leftCredit = leftCredit - leftDebt;
+                    leftDebt = 0;
                     j++;
                     if (j < deptors_.length) {
-                        leftDebt = abs(balances[deptors_[j]]);
+                        leftDebt = utils.abs(balances[deptors_[j]]);
                     }
                 } else {
                     addDebt(deptors_[j], creditors_[i], leftCredit);
                     leftDebt -= leftCredit;
-                    leftCredit = 0; //(breaks while in next iteration)
+                    leftCredit = 0;
                 }
             }
         }
@@ -169,35 +140,41 @@ contract Group {
      * @param value_ value debt
      */
     function addDebt(address from_, address to_, uint256 value_) internal {
-        debts.push(Debt({from: from_, to: to_, value: value_}));
-    }
-
-    //return absolute value of a number
-    function abs(int256 x_) internal pure returns (uint256) {
-        require(x_ != type(int256).min, "Overflow");
-        return x_ >= 0 ? uint256(x_) : uint256(-x_);
+        debts.push(Debt({ from: from_, to: to_, value: value_ }));
     }
 
     /**
-     * @notice Add a new member to the group
-     * @dev By default it's balance is zero and is also
-     * added to the registry map
+     * @notice Add a new member to the group.
+     * @param newMember_ Address of the new member
      */
-    function addMember() public {
-        //TODO:A member can't be in the group twice
+    function addMember(address newMember_) public {
+        //TODO: validate newMember_ is not already in the group
+        //TODO: add to members[], isMember, balances, and increment totalMembers
+        //TODO: call registry to update memberGroups mapping
+    }
+
+    function pay() public payable onlyMember {
+        //TODO: pay a specific debt by index
+    }
+
+    function leaveGroup() public onlyMember {
+        //TODO: validate caller has no outstanding debts (balance == 0)
+        //TODO: remove from members[], update isMember, decrement totalMembers
+        //TODO: call registry to update memberGroups mapping
+    }
+
+    function dissolveGroup() public onlyMember {
+        //TODO: validate all balances are zero (all debts settled)
+        //TODO: restrict to creator or require unanimous member approval
     }
 
     /**
-     * //TODO: pay a specific debt
-     */
-    function pay() public payable onlyMember {}
-
-    /**
-     * @notice transfer all values stablished in the debt mapping and erase it after it.
+     * @notice Pays all of the caller's outstanding debts in one transaction.
+     * msg.value must equal the exact total owed.
      */
     function payAll() public payable onlyMember {
         uint256 totalOwed;
-        for (uint i = 0; i < debts.length; i++) {
+        for (uint256 i = 0; i < debts.length; i++) {
             if (debts[i].from == msg.sender) {
                 totalOwed += debts[i].value;
             }
@@ -205,14 +182,14 @@ contract Group {
         require(totalOwed > 0, "no debts to pay");
         require(totalOwed == msg.value, "Must send exact debts total");
 
-        for (uint i = 0; i < debts.length; i++) {
+        for (uint256 i = 0; i < debts.length; i++) {
             if (debts[i].from == msg.sender && debts[i].value > 0) {
                 uint256 amount = debts[i].value;
                 balances[msg.sender] += int256(amount);
                 balances[debts[i].to] -= int256(amount);
                 debts[i].value = 0;
 
-                (bool success, ) = debts[i].to.call{value: amount}("");
+                (bool success,) = debts[i].to.call{ value: amount }("");
                 require(success, "Transfer failed");
             }
         }
