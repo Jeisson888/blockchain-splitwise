@@ -14,13 +14,12 @@ contract DeployScript is ScaffoldETHDeploy {
     // function run() external {
     //     // Deploys all your contracts sequentially
     //     // Add new deployments here when needed
-
     //     // Deploy YourContract
     //     DeployYourContract yourContract = new DeployYourContract();
     //     yourContract.run();
-
     //     // Deploy another contract
     //     // DeployMyContract myContract = new DeployMyContract();
     //     // myContract.run();
     // }
-}
+
+    }

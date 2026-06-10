@@ -2,6 +2,17 @@
 
 > On-chain expense splitting for groups of people — track, split, and settle debts directly on Ethereum.
 
+![Solidity](https://img.shields.io/badge/Solidity-0.8.33-363636?style=flat&logo=solidity&logoColor=white)
+![Foundry](https://img.shields.io/badge/Foundry-latest-orange?style=flat)
+![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat&logo=next.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
+![DaisyUI](https://img.shields.io/badge/DaisyUI-5-5A0EF8?style=flat&logo=daisyui&logoColor=white)
+![Wagmi](https://img.shields.io/badge/Wagmi-2-1C1C1C?style=flat)
+![Viem](https://img.shields.io/badge/Viem-2-fbbf24?style=flat)
+![OpenZeppelin](https://img.shields.io/badge/OpenZeppelin-latest-4E5EE4?style=flat&logo=openzeppelin&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat)
+
 ## 🌟 Highlights
 
 - **Trustless** — no backend, no server, expenses and debts live on-chain
@@ -18,6 +29,48 @@ The core logic lives in two contracts:
 
 - **`RegistryGroups`** — factory that deploys and indexes `Group` contracts
 - **`Group`** — tracks member balances, computes debts via a greedy algorithm, and handles ETH settlement
+
+## 📐 Contract Architecture
+
+El proyecto usa un patrón factory con tres contratos:
+
+```
+RegistryGroups  (factory + registro global)
+  ├── despliega instancias de Group
+  └── mantiene una instancia compartida de Utils
+
+Group           (lógica por grupo)
+  ├── addExpense(payer, amount)
+  ├── split()
+  ├── payAll()  { payable }
+  └── stubs V2: addMember, pay, leaveGroup, dissolveGroup
+
+Utils           (helpers sin estado, desplegado una sola vez)
+  ├── abs(int256) → uint256
+  └── isSorted / isSortedDesc
+```
+
+![Block Splitter flow](img/splitter.png)
+
+### Modelo de balances
+
+Cada miembro tiene un balance `int256`:
+
+- **Positivo** → es acreedor (le deben dinero)
+- **Negativo** → es deudor (debe dinero)
+- **Cero** → está al día
+
+Cuando se registra un gasto con `addExpense(payer, amount)`, el costo se divide equitativamente entre todos los miembros (`amount / totalMembers`). El residuo de la división entera queda en favor del pagador (rounding estándar, sin wei perdidos en el contrato).
+
+### Algoritmo de deudas (`split` → `getDebts`)
+
+`split()` agrupa a los miembros en deudores (balance < 0) y acreedores (balance ≥ 0) y llama a `getDebts()`, que aplica un algoritmo greedy de dos punteros para minimizar el número de transferencias necesarias. El ordenamiento descendente por balance absoluto se realiza **off-chain** (responsabilidad del caller) para mantener el gas bajo.
+
+### Liquidación con `payAll`
+
+`payAll()` es `payable` y exige que `msg.value` sea exactamente igual al total adeudado por el caller. Itera sobre el array de deudas, transfiere ETH directamente a cada acreedor vía `.call{value}()` y actualiza los balances en el mismo bloque. No se admiten pagos parciales en V1.
+
+---
 
 ## 🚀 Quickstart
 
